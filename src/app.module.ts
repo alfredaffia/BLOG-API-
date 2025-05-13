@@ -5,7 +5,7 @@ import { CommentModule } from './comment/comment.module';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [UserModule, PostModule, CommentModule, CategoryModule, AuthModule],
+  imports: [UserModule, PostModule, CommentModule, AuthModule],
   controllers: [],
   providers: [],
 })
