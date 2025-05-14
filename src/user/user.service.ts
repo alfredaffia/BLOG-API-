@@ -16,7 +16,7 @@ export class UserService {
   ) { }
 
   async create(payload: CreateUserDto) {
-        const {  ...rest } = payload;
+    const { email, userName, password, ...rest } = payload;
     payload.email = payload.email.toLowerCase()
   }
 
