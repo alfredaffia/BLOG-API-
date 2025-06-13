@@ -1,6 +1,6 @@
 import{Column, Entity, OneToMany, PrimaryGeneratedColumn} from 'typeorm';
 import { Post } from '../../post/entities/post.entity';
-import { UserRole } from '../enum/user.role.enum';
+import { UserRole } from '../../auth/enum/user.role.enum';
 
 @Entity()
 export class User {
@@ -8,7 +8,7 @@ export class User {
     id:string;
 
     @Column()
-    UserName:string;
+    userName:string;
 
     @Column()
     email:string;
@@ -22,6 +22,11 @@ export class User {
         default:UserRole.USER
     })
     role:UserRole;
+
+    @Column({
+        default:false
+    })
+    isBlocked:boolean;
 
     @OneToMany(() => Post, (post) => post.user)
     posts:Post[]; // OneToMany relationship with Post entity

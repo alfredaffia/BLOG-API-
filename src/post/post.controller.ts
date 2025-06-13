@@ -8,8 +8,8 @@ export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postService.create(createPostDto);
+  create(@Param('id')id:string ,@Body() createPostDto: CreatePostDto) {
+    return this.postService.createProfile(id,createPostDto);
   }
 
   @Get()

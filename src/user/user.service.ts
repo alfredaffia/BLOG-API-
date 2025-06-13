@@ -1,9 +1,8 @@
-import { ConflictException, HttpException, Injectable, Res } from '@nestjs/common';
+import { ConflictException, HttpException, Injectable, NotFoundException, Res, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import {  Response } from 'express';
-import * as argon2 from 'argon2';
+
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -16,89 +15,79 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService
-  ) { } 
-
-  async create(payload: CreateUserDto) {
-    const { email, userName, password, ...rest } = payload;
-    payload.email = payload.email.toLowerCase()
-    const user = await this.userRepository.findOne({ where: { email:email } });
-    if(user){
-      throw new ConflictException('user alredy exists')
+  ) { }
+  async findAll() {
+    const AllUsers = await this.userRepository.find()
+    if(!AllUsers){
+      'no saved user'
     }
-    const hashPassword =await argon2.hash(password)
-
-    const userDetails = await this.userRepository.save({
-       email,
-       password: hashPassword,
-       userName,
-      ...rest
-    })
-const userPayload ={id:userDetails.id, email:userDetails.email}
-return{
-      userId: userDetails.id,
-      userName: userDetails.userName,
-      userEmail: userDetails.email,
-  access_token: await this.jwtService.signAsync(userPayload),
-}
+    return AllUsers;
   }
 
-
-    async verifyPassword(hashedPassword: string, plainPassword: string,): Promise<boolean> {
-    try {
-      return await argon2.verify(hashedPassword, plainPassword);
-    } catch (err) {
-      console.log(err.message)
-      return false;
+  async findOne (id:string){
+    const user = await this.userRepository.findOne({where:{id:id}})
+    if (!user){
+      throw new NotFoundException('user not found')
     }
   }
-    async signIn(payload: LoginDto, @Res() res: Response) {
-    const { email, password } = payload;
-    // const user = await this.userRepo.findOne({where:{email:email}  })
-    const user = await this.userRepository.createQueryBuilder("user").addSelect("user.password").where("user.email = :email", { email: payload.email }).getOne()
 
-    // console.log('Fetched User:', user);
+
+  async findOneById(id: string,) {
+    const user = await this.userRepository.findOneBy({ id: id });
+    return user
+  }
+
+    async blockUser(id: string): Promise<{ message: string }> {
+    const user = await this.userRepository.findOne({ where: { id } });
 
     if (!user) {
-      throw new HttpException('No email found', 400)
+      throw new NotFoundException('User not found');
     }
-    // if (user.IsBlocked === true) {
-    //   throw new ForbiddenException('your Accoount have been blocked' );
-    // }
-    const checkedPassword = await this.verifyPassword(user.password, password);
-    if (!checkedPassword) {
-      throw new HttpException('password incorrect', 400)
+
+    user.isBlocked = true;
+    await this.userRepository.save(user);
+
+    return { message: `User with ID ${id} has been blocked.` };
+  }
+
+  async unBlockUser(id: string): Promise<{ message: string }> {
+    const user = await this.userRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
-    const token = await this.jwtService.signAsync({
-      email: user.email,
-      id: user.id
-    });
 
-    res.cookie('isAuthenticated', token, {
-      httpOnly: true,
-      maxAge: 1 * 60 * 60 * 1000
-    });
-    // delete user.password
-    return res.send({
-      success: true,
-      userToken: token
+    user.isBlocked = false;
+    await this.userRepository.save(user);
 
-    })
+    return { message: `User with ID ${id} has been unblocked.` };
   }
 
 
-  findAll() {
-    return `This action returns all user`;
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const newUpdate = await this.userRepository.findOne({where:{ id }})
+    if (!newUpdate) {
+      throw new NotFoundException('user not found')
+    }
+
+    const updateUser = await this.userRepository.update(id, updateUserDto)
+    const updatedUser = await this.userRepository.findOne({where:{id}})
+    return{
+      statusCode :200,
+      message: 'user updated successfully',
+      data:updatedUser
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+  async remove(id: string) {
+    const result = await this.userRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Library record with ID ${id} not found`);
+    }
+    const newresult = await this.userRepository.delete(id)
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+    return {
+      message: `Library record with ID ${id} deleted successfully`
+    };
   }
 }

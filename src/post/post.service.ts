@@ -1,12 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Post } from './entities/post.entity';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class PostService {
-  create(createPostDto: CreatePostDto) {
-    return 'This action adds a new post';
+  constructor(@InjectRepository(Post)
+  private postRepository :Repository<Post>,
+  private userService:UserService
+){}
+
+async createProfile(id:string, createPostDto:CreatePostDto){
+  const user=await this.userService.findOneById(id)
+  if(!user){
+    throw new NotFoundException('user Does Not Exist')
   }
+const newPost = await this.postRepository.save(createPostDto);
+const post = await this.postRepository.create({
+  ...createPostDto,
+  user:user })
+}
+
+wa
 
   findAll() {
     return `This action returns all post`;

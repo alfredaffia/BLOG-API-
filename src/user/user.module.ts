@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,12 +7,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import * as dotenv from 'dotenv'
 import { Post } from 'src/post/entities/post.entity';
+import { AuthModule } from 'src/auth/auth.module';
 dotenv.config()
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([User]),
-
+      AuthModule,
     JwtModule.register({
       global:true,
       secret:process.env.JWTSECRET,
@@ -25,5 +26,6 @@ dotenv.config()
   ],
   controllers: [UserController],
   providers: [UserService,],
+  exports:[UserService]
 })
 export class UserModule {}
