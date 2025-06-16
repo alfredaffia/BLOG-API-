@@ -9,28 +9,41 @@ import { UserService } from 'src/user/user.service';
 @Injectable()
 export class PostService {
   constructor(@InjectRepository(Post)
-  private postRepository :Repository<Post>,
-  private userService:UserService
-){}
+  private postRepository: Repository<Post>,
+    private userService: UserService
+  ) { }
 
-async createProfile(id:string, createPostDto:CreatePostDto){
-  const user=await this.userService.findOneById(id)
-  if(!user){
-    throw new NotFoundException('user Does Not Exist')
+  async createPost(id: string, createPostDto: CreatePostDto) {
+    const user = await this.userService.findOneById(id)
+
+    if (!user) {
+      throw new NotFoundException('user Does Not Exist')
+    }
+    const newPost = this.postRepository.create({ ...createPostDto });
+    const savedPost = await this.postRepository.save(newPost);
+
+    return savedPost;
   }
-const newPost = await this.postRepository.save(createPostDto);
-const post = await this.postRepository.create({
-  ...createPostDto,
-  user:user })
-}
 
-wa
+  // async findAllPostsByUserId(id: string) {
+  //   const user = await this.userService.findOneById(id);
+
+  //   if (!user) {
+  //     throw new NotFoundException('user Does Not Exist');
+  //   }
+
+  //   return this.postRepository.find({ where: { user: { id } } });
+  // }
 
   findAll() {
-    return `This action returns all post`;
+    const allPosts = this.postRepository.find()
+    if (!allPosts) {
+      throw new NotFoundException('No posts found');
+    }
+    return allPosts;
   }
-
-  findOne(id: number) {
+  
+  findOne(id:string) {
     return `This action returns a #${id} post`;
   }
 

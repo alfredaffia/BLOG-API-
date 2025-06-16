@@ -9,7 +9,7 @@ export class PostController {
 
   @Post()
   create(@Param('id')id:string ,@Body() createPostDto: CreatePostDto) {
-    return this.postService.createProfile(id,createPostDto);
+    return this.postService.createPost(id,createPostDto);
   }
 
   @Get()
@@ -19,7 +19,7 @@ export class PostController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.postService.findOne(+id);
+    return this.postService.findOne(id);
   }
 
   @Patch(':id')
