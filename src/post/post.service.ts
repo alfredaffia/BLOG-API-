@@ -19,10 +19,11 @@ export class PostService {
     if (!user) {
       throw new NotFoundException('user Does Not Exist')
     }
-    const newPost = this.postRepository.create({ ...createPostDto,
+    const newPost = this.postRepository.create({
+      ...createPostDto,
       // user: user, // Associate the post with the user
-      authorId: user.id, 
-     });
+      authorId: user.id,
+    });
     const savedPost = await this.postRepository.save(newPost);
 
     return savedPost;
@@ -37,15 +38,20 @@ export class PostService {
     return allPosts;
   }
 
-  findOne(id:string) {
-    return `This action returns a #${id} post`;
+  async findOne(id: string) {
+    const post = await this.postRepository.findOne({ where: { id: id } });
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+    // Optionally, you can remove the check for post.id since if post is null, the above exception is thrown
+    return post;
   }
 
   update(id: number, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
   }
 
   remove(id: number) {
     return `This action removes a #${id} post`;
   }
+
 }

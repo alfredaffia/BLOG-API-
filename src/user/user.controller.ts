@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus} from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -9,8 +9,12 @@ import { UserRole } from '../auth/enum/user.role.enum';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
+  @Post('seed-admins')
+  async seedAdmins() {
+    return await this.userService.seedDefaultAdmins();
+  }
 
   @Get()
   findAll() {
@@ -22,7 +26,8 @@ export class UserController {
     return this.userService.findOneById(id);
   }
 
-  @UseGuards(AuthGuard(),RolesGuard)
+
+  @UseGuards(AuthGuard(), RolesGuard)
   @Roles(UserRole.ADMIN)
   @Patch(':id/block')
   async updateBlockStatus(
@@ -30,8 +35,8 @@ export class UserController {
     return this.userService.blockUser(id);
   }
 
-  @UseGuards(AuthGuard(),RolesGuard)
-  @Roles(UserRole.ADMIN,UserRole.SUPERADMIN) 
+  @UseGuards(AuthGuard(), RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @Patch(':id/unblock')
   async updateUnBlockStatus(
     @Param('id') id: string) {

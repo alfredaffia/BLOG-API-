@@ -14,15 +14,6 @@ dotenv.config()
   imports:[
     TypeOrmModule.forFeature([User]),
       AuthModule,
-    JwtModule.register({
-      global:true,
-      secret:process.env.JWTSECRET,
-      signOptions:{expiresIn: '1h'}
-    }),
-    PassportModule.register({
-      defaultStrategy:'jwt',
-      session:true,
-    })
   ],
   controllers: [UserController],
   providers: [UserService,],

@@ -1,21 +1,65 @@
 import { ConflictException, HttpException, Injectable, NotFoundException, Res, UnauthorizedException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-
+import * as argon2 from 'argon2';
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
-import { LoginDto } from './dto/login.dto';
+import { UserRole } from 'src/auth/enum/user.role.enum';
+
 
 
 @Injectable()
 export class UserService {
+    private readonly ADMIN_USERS_TO_SEED = [
+    {
+      email: 'admin@gmail.com',
+      password: 'SuperSecureAdminPassword123!',
+      userName: 'Admin',
+      role: UserRole.ADMIN
+    },
+    {
+      email: 'admin2@gmail.com',
+      password: 'AnotherStrongPassword456!',
+    userName: 'Secondary Administrator',
+      role: UserRole.ADMIN
+    },
+  ];
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    private jwtService: JwtService
   ) { }
+
+  async seedDefaultAdmins() :Promise<any>{
+    if (!this.ADMIN_USERS_TO_SEED || this.ADMIN_USERS_TO_SEED.length === 0) {
+      console.warn('No admin users defined for seeding. Skipping.');
+      return;
+    }
+
+    for (const adminData of this.ADMIN_USERS_TO_SEED) {
+      try {
+        const existingAdmin = await this.userRepository.findOneBy({ email: adminData.email })
+        if (existingAdmin) {
+          console.warn(`Admin "${adminData.email}" already exists. Skipping.`);
+          continue;
+        }
+        const hashedPassword = await argon2.hash(adminData.password);
+
+        const newAdmin = this.userRepository.create({
+          userName: adminData.userName ,
+          email: adminData.email,
+          password: hashedPassword,
+          role: adminData.role || UserRole.ADMIN,
+        });
+        await this.userRepository.save(newAdmin);
+        console.log(`Admin "${adminData.email}" seeded successfully.`);
+
+      } catch (error) {
+        console.error(`Error seeding admin "${adminData.email}": ${error.message}`);
+      }
+    }
+  }
+
+
   async findAll() {
     const AllUsers = await this.userRepository.find()
     if(!AllUsers){
@@ -25,10 +69,7 @@ export class UserService {
   }
 
   async findOne (id:string){
-    const user = await this.userRepository.findOne({
-      where: { id: id },
-      relations: ['posts']
-    });
+    const user = await this.userRepository.findOne({where:{id: id}});
     if (!user){
       throw new NotFoundException('user not found')
     }
@@ -38,7 +79,10 @@ export class UserService {
 
   async findOneById(id: string,) {
     const user = await this.userRepository.findOneBy({ id: id },);
-    return user
+    if (!user){
+      throw new NotFoundException('user not found')
+    }
+    return user;
   }
 
     async blockUser(id: string): Promise<{ message: string }> {
@@ -67,9 +111,18 @@ export class UserService {
     return { message: `User with ID ${id} has been unblocked.` };
   }
 
-  
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     const newUpdate = await this.userRepository.findOne({where:{ id }})
+
+    if(updateUserDto.password) {
+      const hashedPassword = await argon2.hash(updateUserDto.password);
+      updateUserDto.password = hashedPassword;
+    }
+      const existingUser = await this.userRepository.findOne({ where: { email: updateUserDto.email } });
+    if(existingUser) {
+      throw new ConflictException('user with this email already exist')
+    }
     if (!newUpdate) {
       throw new NotFoundException('user not found')
     }
