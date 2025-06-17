@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, Injectable, NotFoundException, Res, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, Injectable, NotFoundException, Res, UnauthorizedException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import * as argon2 from 'argon2';
@@ -112,28 +112,64 @@ export class UserService {
   }
 
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    const newUpdate = await this.userRepository.findOne({where:{ id }})
+  // async update(id: string, updateUserDto: UpdateUserDto) {
+  //   const newUpdate = await this.userRepository.findOneBy({id:id })
 
-    if(updateUserDto.password) {
-      const hashedPassword = await argon2.hash(updateUserDto.password);
-      updateUserDto.password = hashedPassword;
-    }
-      const existingUser = await this.userRepository.findOne({ where: { email: updateUserDto.email } });
-    if(existingUser) {
-      throw new ConflictException('user with this email already exist')
-    }
-    if (!newUpdate) {
-      throw new NotFoundException('user not found')
+  //   if(updateUserDto.password) {
+  //     const hashedPassword = await argon2.hash(updateUserDto.password);
+  //     updateUserDto.password = hashedPassword;
+  //   }
+  //     const existingUser = await this.userRepository.findOne({ where: { email: updateUserDto.email } });
+  //   if(existingUser) {
+  //     throw new ConflictException('user with this email already exist')
+  //   }
+  //   if (!newUpdate) {
+  //     throw new NotFoundException('user not found')
+  //   }
+
+  //   const updateUser = await this.userRepository.update(id, updateUserDto)
+  //   const updatedUser = await this.userRepository.findOneBy({id:id })
+  //   return{
+  //     statusCode :200,
+  //     message: 'user updated successfully',
+  //     data:updatedUser
+  //   }
+  // }
+async update(userId: string, updateUserDto: UpdateUserDto): Promise<User> { // Removed currentUserId parameter
+    // 1. Find the target user profile in the database
+    const userToUpdate = await this.userRepository.findOne({where:{id: userId}});
+    if (!userToUpdate) {
+      throw new NotFoundException(`User profile with ID "${userId}" not found.`);
     }
 
-    const updateUser = await this.userRepository.update(id, updateUserDto)
-    const updatedUser = await this.userRepository.findOne({where:{id}})
-    return{
-      statusCode :200,
-      message: 'user updated successfully',
-      data:updatedUser
+    // !! SECURITY ALERT !!
+    // No authorization check is performed here because currentUserId is not provided.
+    // This means any request to this method with a valid userId will update the profile.
+    // DO NOT USE THIS IN A REAL APPLICATION WHERE ONLY OWNERS SHOULD UPDATE.
+
+    // 2. Handle Email Uniqueness (if email is being updated)
+    if (updateUserDto.email && updateUserDto.email !== userToUpdate.email) {
+      const existingUserWithNewEmail = await this.userRepository.findOneBy({ email: updateUserDto.email });
+      if (existingUserWithNewEmail && existingUserWithNewEmail.id !== userToUpdate.id) {
+        throw new BadRequestException('The new email address is already registered to another user.');
+      }
     }
+
+    if (updateUserDto.password) {
+      userToUpdate.password = await argon2.hash(updateUserDto.password);
+      delete updateUserDto.password; 
+    }
+
+    // 4. Apply other updates from the DTO to the user entity
+    Object.assign(userToUpdate, updateUserDto);
+
+    // 5. Save the updated user entity to the database
+    // TypeORM generates and executes the SQL UPDATE statement here
+    const updatedUser = await this.userRepository.save(userToUpdate);
+
+    // 6. Security: Remove the hashed password before returning
+    // delete updatedUser.password;
+    return updatedUser;
   }
 
   async remove(id: string) {

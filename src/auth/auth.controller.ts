@@ -8,7 +8,7 @@ import { Response } from 'express';
 export class AuthController {
     constructor(
         private authService:AuthService
-    ){}
+    ){}t
     
       @Post('signup')
       create(@Body() createUserDto: CreateUserDto) {

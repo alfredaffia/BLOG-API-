@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy,'jwt') {
     if(!user){
         throw new UnauthorizedException('Login first to access this endpoint')
     }
-    if (user.isBlocked) {
+    if (user.isBlocked === true) {
       throw new UnauthorizedException('User is blocked');
     }
     return user;

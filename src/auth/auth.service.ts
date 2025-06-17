@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import * as argon2 from 'argon2';
 import { LoginDto } from 'src/user/dto/login.dto';
 import { Response } from 'express';
+import { use } from 'passport';
 
 @Injectable()
 export class AuthService {
@@ -31,7 +32,7 @@ export class AuthService {
           userName,
           ...rest
         })
-        const userPayload = { id: userDetails.id, email: userDetails.email }
+        const userPayload = { id: userDetails.id, email: userDetails.email ,userName: userDetails.userName, role: userDetails.role, isBlocked: userDetails.isBlocked }
         return {
           userId: userDetails.id,userName: userDetails.userName,userEmail: userDetails.email,
           access_token: await this.jwtService.signAsync(userPayload),
@@ -62,7 +63,11 @@ export class AuthService {
       }
       const token = await this.jwtService.signAsync({
         email: user.email,
-        id: user.id
+        id: user.id,
+        userName: user.userName,
+        isBlocked: user.isBlocked,
+        role: user.role
+
       });
   
       res.cookie('isAuthenticated', token, {

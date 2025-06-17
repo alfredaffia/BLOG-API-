@@ -1,10 +1,21 @@
-import { Controller, Get, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Delete, UseGuards, Post, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/auth/guard/role';
 import { RolesGuard } from 'src/auth/guard/role.guard';
 import { UserRole } from '../auth/enum/user.role.enum';
+import { Request } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string; 
+    email: string;
+    role: UserRole; 
+    isBlocked: boolean; 
+  };
+}
+
 
 
 @Controller('user')
@@ -43,10 +54,20 @@ export class UserController {
     return this.userService.unBlockUser(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(id, updateUserDto);
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  //   return this.userService.update(id, updateUserDto);
+  // }
+
+
+  @Patch(':id') 
+  async update(
+    @Param('id') userId: string, 
+    @Body() updateUserDto: UpdateUserDto, 
+  ) {
+    return this.userService.update(userId, updateUserDto); // Removed currentUserId argument
   }
+
 
   @Delete(':id')
   remove(@Param('id') id: string) {
