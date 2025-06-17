@@ -19,21 +19,15 @@ export class PostService {
     if (!user) {
       throw new NotFoundException('user Does Not Exist')
     }
-    const newPost = this.postRepository.create({ ...createPostDto });
+    const newPost = this.postRepository.create({ ...createPostDto,
+      // user: user, // Associate the post with the user
+      authorId: user.id, 
+     });
     const savedPost = await this.postRepository.save(newPost);
 
     return savedPost;
   }
 
-  // async findAllPostsByUserId(id: string) {
-  //   const user = await this.userService.findOneById(id);
-
-  //   if (!user) {
-  //     throw new NotFoundException('user Does Not Exist');
-  //   }
-
-  //   return this.postRepository.find({ where: { user: { id } } });
-  // }
 
   findAll() {
     const allPosts = this.postRepository.find()
@@ -42,7 +36,7 @@ export class PostService {
     }
     return allPosts;
   }
-  
+
   findOne(id:string) {
     return `This action returns a #${id} post`;
   }

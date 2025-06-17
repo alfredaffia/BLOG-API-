@@ -6,7 +6,7 @@ export class Post {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({nullable: false})
+    @Column({ nullable: false })
     title: string;
 
     @Column({
@@ -24,8 +24,11 @@ export class Post {
     //     @OneToMany(() => Comment, comment => comment.post)
     // comments: Comment[];
 
-        @ManyToOne(() => User, (user) => user.posts,)
-    @JoinColumn()
+    @Column({ name: 'author_id', nullable: false })
+    authorId: string;
+
+    @ManyToOne(() => User, (user) => user.posts,)
+    @JoinColumn({ name: 'author_id' })
     user: User
 
 }

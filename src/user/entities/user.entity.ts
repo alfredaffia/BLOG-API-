@@ -28,7 +28,10 @@ export class User {
     })
     isBlocked:boolean;
 
-    @OneToMany(() => Post, (post) => post.user)
+    @OneToMany(() => Post, (post) => post.user,
+   {cascade:true,
+        eager:true,
+    })
     posts:Post[]; // OneToMany relationship with Post entity
 
 }

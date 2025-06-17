@@ -25,15 +25,19 @@ export class UserService {
   }
 
   async findOne (id:string){
-    const user = await this.userRepository.findOne({where:{id:id}})
+    const user = await this.userRepository.findOne({
+      where: { id: id },
+      relations: ['posts']
+    });
     if (!user){
       throw new NotFoundException('user not found')
     }
+    return user;
   }
 
 
   async findOneById(id: string,) {
-    const user = await this.userRepository.findOneBy({ id: id });
+    const user = await this.userRepository.findOneBy({ id: id },);
     return user
   }
 
@@ -63,7 +67,7 @@ export class UserService {
     return { message: `User with ID ${id} has been unblocked.` };
   }
 
-
+  
   async update(id: string, updateUserDto: UpdateUserDto) {
     const newUpdate = await this.userRepository.findOne({where:{ id }})
     if (!newUpdate) {
