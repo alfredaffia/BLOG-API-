@@ -2,7 +2,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Comment } from '../comment/entities/comment.entity';
 import { Post } from '../post/entities/post.entity';
 import { User } from '../user/entities/user.entity';
 @Module({
@@ -17,7 +16,7 @@ import { User } from '../user/entities/user.entity';
       username: configService.getOrThrow('DB_USERNAME'),
       password: configService.getOrThrow('DB_PASSWORD'),
       database: configService.getOrThrow('DB_NAME'),
-      entities: [User,Post,Comment], // Ensure this line includes the User entity
+      entities: [User,Post], // Ensure this line includes the User entity
       synchronize: true,
     })
     }),
