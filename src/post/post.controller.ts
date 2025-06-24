@@ -6,11 +6,11 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Controller('post')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(private readonly postService: PostService) { }
 
   @Post('newpost/:id')
-  create(@Param('id')id:string ,@Body() createPostDto: CreatePostDto) {
-    return this.postService.createPost(id,createPostDto);
+  create(@Param('id') id: string, @Body() createPostDto: CreatePostDto) {
+    return this.postService.createPost(id, createPostDto);
   }
 
   @Get()
@@ -25,13 +25,14 @@ export class PostController {
     return this.postService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postService.update(+id, updatePostDto);
+  @UseGuards(AuthGuard())
+  @Patch(':postId/:userId')
+  update(@Param('userId') userId: string, @Param('postId') postId: string, @Body() updatePostDto: UpdatePostDto) {
+    return this.postService.update(userId, updatePostDto, postId);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.postService.remove(+id);
+    return this.postService.remove(id);
   }
 }

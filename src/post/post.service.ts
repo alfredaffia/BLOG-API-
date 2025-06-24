@@ -21,7 +21,6 @@ export class PostService {
     }
     const newPost = this.postRepository.create({
       ...createPostDto,
-      // user: user, // Associate the post with the user
       authorId: user.id,
     });
     const savedPost = await this.postRepository.save(newPost);
@@ -47,11 +46,31 @@ export class PostService {
     return post;
   }
 
-  update(id: number, updatePostDto: UpdatePostDto) {
+ async update(userId: string, updatePostDto: UpdatePostDto, postId: string) {
+    const postToUpdate = await this.postRepository.findOne({ where: { id: postId } ,});
+    if (!postToUpdate) {
+      throw new NotFoundException('Post not found');
+    }
+    if (postToUpdate.authorId !== userId) {
+      throw new NotFoundException('You are not authorized to update this post');
+    }
+  const updatepost= await this.postRepository.update(postId, updatePostDto);
+  const updatedPost =await this.postRepository.findOne({where:{id:postId}})
+
+  return updatedPost
+
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  async remove(id: string) {
+    const result = await this.postRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Library record with ID ${id} not found`);
+    }
+    const newresult = await this.postRepository.delete(id)
+
+    return {
+      message: `Library record with ID ${id} deleted successfully`
+    };
   }
 
 }
