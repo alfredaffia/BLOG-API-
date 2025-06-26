@@ -27,7 +27,8 @@ export class UserController {
     return await this.userService.seedDefaultAdmins();
   }
 
-  @UseGuards(AuthGuard())
+  @UseGuards(AuthGuard(),RolesGuard)
+  @Roles(UserRole.ADMIN, ) 
   @Get()
   findAll() {
     return this.userService.findAll();
@@ -48,7 +49,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard(), RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Roles(UserRole.ADMIN,)
   @Patch(':id/unblock')
   async updateUnBlockStatus(
     @Param('id') id: string) {
