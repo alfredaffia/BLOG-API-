@@ -27,6 +27,7 @@ export class UserController {
     return await this.userService.seedDefaultAdmins();
   }
 
+  @UseGuards(AuthGuard())
   @Get()
   findAll() {
     return this.userService.findAll();
